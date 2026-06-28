@@ -586,7 +586,7 @@ async function loadData() {
     const ejec      = num(lookup['Fondos ejecutados / pagados (acum.)']?.[li]);
     const recBSraw  = num(lookup['Fondos recibidos en Bolivares']?.[li]);
     const totalUSD  = num(lookup['Total USD al dia']?.[li]);
-    const saldo     = totalUSD - ejec;
+    const saldo     = recUSD + totalUSD - ejec;
     const novedad   = lookup['Novedades / consideraciones']?.[li] || 'Sin novedades registradas para hoy.';
 
     // Reservas
