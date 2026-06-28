@@ -536,17 +536,17 @@ function buildOrgTable(rows) {
 
 async function loadData() {
   try {
-    // Load both sheets in parallel
+    // Load both sheets via Apps Script
     const [r1, r2] = await Promise.all([
-      fetch(CSV_DIARIO),
-      fetch(CSV_ORGS)
+      fetch(API + '?sheet=SEGUIMIENTO DIARIO'),
+      fetch(API + '?sheet=ORGANIZACIONES')
     ]);
 
     if (!r1.ok || !r2.ok) throw new Error('No se pudo acceder al Sheet');
 
-    const [t1, t2] = await Promise.all([r1.text(), r2.text()]);
-    const diario = parseCSV(t1);
-    const orgs   = parseCSV(t2);
+    const [j1, j2] = await Promise.all([r1.json(), r2.json()]);
+    const diario = j1;
+    const orgs   = j2;
 
     // Build lookup: indicador → array of values by column
     const lookup = {};
@@ -675,7 +675,7 @@ async function loadData() {
     document.getElementById('error-msg').style.display = 'block';
     document.getElementById('error-msg').textContent =
       '⚠️ No se pudieron cargar los datos: ' + err.message +
-      '. Verifica que el Sheet esté publicado en la web (Archivo → Compartir → Publicar en la web).';
+      '. El Apps Script no respondió. Verifica que la implementación esté activa.';
   }
 }
 
