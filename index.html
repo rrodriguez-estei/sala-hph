@@ -367,7 +367,7 @@
         <div class="prog-label"><span>Ejecución de fondos</span><span id="f-pct">0%</span></div>
         <div class="prog-track"><div class="prog-fill" id="f-bar" style="width:0%;background:#e34948"></div></div>
       </div>
-      <div style="font-size:10px;color:var(--texto3);margin-top:6px">Bs convertidos a tasa Bs 617.63/USD</div>
+      <div style="font-size:10px;color:var(--texto3);margin-top:6px">Bs convertidos usando tasa del día registrada en el Sheet</div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Novedad del día</div>
@@ -582,9 +582,11 @@ async function loadData() {
     const orgsN     = num(lookup['Organizaciones atendidas']?.[li]);
     const alianzas  = num(lookup['Alianzas con hoteles concretadas']?.[li]);
     const recUSD    = num(lookup['Fondos recaudados en dolares']?.[li]);
-    const recBS     = num(lookup['Fondos recaudados en Bolivares']?.[li]);
+    const recBS     = num(lookup['Fondos recibidos en Bolivares']?.[li]);
     const ejec      = num(lookup['Fondos ejecutados / pagados (acum.)']?.[li]);
-    const saldo     = (recUSD - ejec) + (recBS / 617.63);
+    const recBSraw  = num(lookup['Fondos recibidos en Bolivares']?.[li]);
+    const totalUSD  = num(lookup['Total USD al dia']?.[li]);
+    const saldo     = totalUSD - ejec;
     const novedad   = lookup['Novedades / consideraciones']?.[li] || 'Sin novedades registradas para hoy.';
 
     // Reservas
@@ -620,9 +622,10 @@ async function loadData() {
       `${totalResConf + totalResAyer} de ${totalResSol} reservas cerradas en 48h`;
 
     document.getElementById('f-usd').textContent = usd(recUSD);
-    document.getElementById('f-bs').textContent = 'Bs ' + recBS.toLocaleString('es-VE');
+    document.getElementById('f-bs').textContent = 'Bs ' + recBSraw.toLocaleString('es-VE');
     document.getElementById('f-ejec').textContent = usd(ejec);
     document.getElementById('f-saldo').textContent = usd(saldo);
+    document.getElementById('kpi-saldo').textContent = usd(saldo);
     const pctEjec = recUSD > 0 ? Math.min(100, Math.round(ejec / recUSD * 100)) : 0;
     document.getElementById('f-pct').textContent = pctEjec + '%';
     document.getElementById('f-bar').style.width = pctEjec + '%';
