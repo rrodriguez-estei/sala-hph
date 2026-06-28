@@ -389,9 +389,7 @@
 </div><!-- /dashboard -->
 
 <script>
-const SHEET_ID = '1uaW-G0trgEXGWUmGYVuiOirgw0Dct_OHL4Cnoh0j7Lw';
-const CSV_DIARIO = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-const CSV_ORGS   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1214108340`;
+const API = 'https://script.google.com/macros/s/AKfycbyWmMpM0r-Zqzp8WlPzkwj9M0KYmfiRvwX7lenlMjtmzvO3H6VJuEOqAkTtP7OaRZmijA/exec';
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
