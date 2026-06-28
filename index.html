@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sala Situacional HPH — Contingencia Nacional</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --azul:     #1F3864;
+    --azul-med: #2E75B6;
+    --azul-cl:  #E6F1FB;
+    --verde:    #1E5631;
+    --verde-cl: #EAF3DE;
+    --verde-med:#3B6D11;
+    --naranja:  #C55A11;
+    --naranja-cl:#FCE5CD;
+    --amarillo: #FFF2CC;
+    --gris-bg:  #F5F6F8;
+    --gris-bd:  #E2E6EA;
+    --texto:    #1a1a2e;
+    --texto2:   #52514E;
+    --texto3:   #898781;
+    --blanco:   #FFFFFF;
+    --radius:   10px;
+    --shadow:   0 1px 4px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gris-bg); color: var(--texto); }
+
+  /* HEADER */
+  .header {
+    background: var(--azul);
+    padding: 1rem 2rem;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+  }
+  .header-left { display: flex; align-items: center; gap: .75rem; }
+  .header-logo { font-size: 22px; }
+  .header-title { color: #fff; font-size: 16px; font-weight: 600; line-height: 1.2; }
+  .header-sub { color: #8BA8D4; font-size: 12px; }
+  .header-badge {
+    background: rgba(255,255,255,0.15); color: #fff;
+    font-size: 11px; padding: 4px 12px; border-radius: 20px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .dot-live { width: 7px; height: 7px; border-radius: 50%; background: #4CAF50; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* LOADING */
+  #loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 60vh; gap: 1rem; color: var(--texto2);
+  }
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid var(--gris-bd);
+    border-top-color: var(--azul-med); border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MAIN */
+  .main { padding: 1.25rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+  .sec-title {
+    font-size: 11px; font-weight: 600; color: var(--texto3);
+    text-transform: uppercase; letter-spacing: .06em;
+    margin: 1.25rem 0 .6rem;
+  }
+
+  /* KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .kpi {
+    background: var(--blanco); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: .9rem 1rem;
+  }
+  .kpi-label { font-size: 11px; color: var(--texto3); margin-bottom: 5px; line-height: 1.3; }
+  .kpi-val { font-size: 26px; font-weight: 700; line-height: 1; }
+  .kpi-sub { font-size: 10px; color: var(--texto2); margin-top: 4px; }
+  .c-azul { color: var(--azul-med); }
+  .c-verde { color: var(--verde-med); }
+  .c-naranja { color: var(--naranja); }
+  .c-gris { color: var(--texto2); }
+
+  /* GESTION CARDS */
+  .gestion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gestion-card {
+    border-radius: var(--radius); padding: 1rem 1.1rem;
+    box-shadow: var(--shadow);
+  }
+  .gc-verde { background: var(--verde-cl); border: 1px solid #C0DD97; }
+  .gc-azul  { background: var(--azul-cl);  border: 1px solid #B5D4F4; }
+  .gc-pill {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 9px; border-radius: 20px; margin-bottom: 6px;
+  }
+  .pill-v { background: #C0DD97; color: #27500A; }
+  .pill-b { background: #B5D4F4; color: #0C447C; }
+  .gc-val { font-size: 36px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .gc-desc { font-size: 12px; margin-bottom: 8px; }
+  .gc-formula {
+    font-size: 10px; color: var(--texto2); line-height: 1.5;
+    border-top: 1px solid rgba(0,0,0,0.08); padding-top: 7px;
+  }
+
+  /* CHARTS ROW */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .chart-card {
+    background: var(--blanco); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: .9rem 1rem;
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-title { font-size: 13px; font-weight: 600; color: var(--texto); margin-bottom: 2px; }
+  .chart-sub { font-size: 11px; color: var(--texto3); margin-bottom: .6rem; }
+  .leg-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 7px; }
+  .leg-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--texto2); }
+  .leg-sq { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+  /* TABLA ORGANIZACIONES */
+  .org-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { font-size: 11px; color: var(--texto3); font-weight: 500; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--gris-bd); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--gris-bd); color: var(--texto); }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  .pill-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500;
+    display: inline-block;
+  }
+  .tag-blue { background: var(--azul-cl); color: #0C447C; }
+  .tag-gray { background: #F0F0F0; color: #555; }
+  .tag-amber { background: var(--amarillo); color: #7F6000; }
+  .tag-verde { background: var(--verde-cl); color: #27500A; }
+  .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+  .dot-amber { background: #E6A817; }
+  .dot-verde { background: #3B6D11; }
+
+  /* FONDOS */
+  .fondos-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--gris-bd);
+  }
+  .fondos-row:last-child { border-bottom: none; }
+  .fl { color: var(--texto2); }
+  .fv { font-weight: 600; }
+  .tag-bs {
+    font-size: 10px; background: var(--amarillo); color: #7F6000;
+    padding: 1px 6px; border-radius: 10px; margin-left: 5px;
+  }
+  .prog-wrap { margin-top: 10px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--texto3); margin-bottom: 3px; }
+  .prog-track { height: 8px; background: var(--gris-bg); border-radius: 10px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 10px; transition: width .6s ease; }
+
+  /* NOTA */
+  .nota-box {
+    border-left: 3px solid var(--azul-med); padding: .7rem 1rem;
+    font-size: 12px; color: var(--texto2); line-height: 1.7;
+    background: var(--azul-cl); border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  /* ALERTA */
+  .alerta {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; background: var(--naranja-cl); color: var(--naranja);
+    border-radius: var(--radius); padding: 6px 10px; margin-top: 8px;
+    border: 1px solid #F5C4B3;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center; font-size: 11px; color: var(--texto3);
+    padding: 1.5rem; border-top: 1px solid var(--gris-bd); margin-top: 1rem;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .gestion-grid, .charts-row { grid-template-columns: 1fr; }
+    .chart-card.full { grid-column: 1; }
+    .main { padding: 1rem; }
+  }
+
+  #dashboard { display: none; }
+  #error-msg { display: none; text-align: center; padding: 3rem; color: var(--naranja); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">🏥</div>
+    <div>
+      <div class="header-title">Sala Situacional HPH</div>
+      <div class="header-sub">Contingencia Nacional · Gestión de Hospedaje</div>
+    </div>
+  </div>
+  <div class="header-badge">
+    <div class="dot-live"></div>
+    <span id="ultima-act">Cargando...</span>
+  </div>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div>Conectando con Google Sheets...</div>
+</div>
+
+<div id="error-msg">
+  ⚠️ No se pudieron cargar los datos. Verifica que el Sheet esté publicado.
+</div>
+
+<div id="dashboard">
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="sec-title">Resumen del día</div>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total solicitados</div>
+      <div class="kpi-val c-azul" id="kpi-sol">—</div>
+      <div class="kpi-sub" id="kpi-sol-sub">héroes + familiares</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total confirmados</div>
+      <div class="kpi-val c-verde" id="kpi-conf">—</div>
+      <div class="kpi-sub" id="kpi-conf-sub">héroes + familiares</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Noches confirmadas</div>
+      <div class="kpi-val c-naranja" id="kpi-noches">—</div>
+      <div class="kpi-sub">acumuladas</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Organizaciones</div>
+      <div class="kpi-val c-gris" id="kpi-orgs">—</div>
+      <div class="kpi-sub">activas</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Alianzas hoteleras</div>
+      <div class="kpi-val c-gris" id="kpi-alianzas">—</div>
+      <div class="kpi-sub">hoteles / alojamientos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Saldo disponible</div>
+      <div class="kpi-val c-verde" id="kpi-saldo">—</div>
+      <div class="kpi-sub">USD disponibles</div>
+    </div>
+  </div>
+
+  <!-- INDICADORES DE GESTIÓN -->
+  <div class="sec-title">Indicadores de gestión</div>
+  <div class="gestion-grid">
+    <div class="gestion-card gc-verde">
+      <span class="gc-pill pill-v">Efectividad diaria</span>
+      <div class="gc-val c-verde" id="gc-efectividad">—</div>
+      <div class="gc-desc c-verde" id="gc-efectividad-desc">Confirmadas hoy vs solicitadas hoy</div>
+      <div class="gc-formula">
+        <strong>Fórmula:</strong> Confirmadas hoy ÷ Solicitadas hoy<br>
+        <span style="color:var(--verde-med)">Mide tu velocidad de respuesta inmediata</span>
+      </div>
+    </div>
+    <div class="gestion-card gc-azul">
+      <span class="gc-pill pill-b">Eficiencia de concreción D+1</span>
+      <div class="gc-val c-azul" id="gc-concrecion">—</div>
+      <div class="gc-desc c-azul" id="gc-concrecion-desc">Considera también confirmaciones del día siguiente</div>
+      <div class="gc-formula">
+        <strong>Fórmula:</strong> (Confirmadas hoy + Confirmadas de ayer) ÷ Solicitadas hoy<br>
+        <span style="color:var(--azul-med)">Refleja tu capacidad real de cierre en 48h</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRÁFICAS -->
+  <div class="sec-title">Evolución diaria</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Tasa de efectividad vs eficiencia D+1</div>
+      <div class="chart-sub">Por día · se construye a medida que registras</div>
+      <div class="leg-row">
+        <span class="leg-item"><span class="leg-sq" style="background:#3B6D11"></span>Efectividad</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#2a78d6;opacity:.7"></span>Eficiencia D+1</span>
+      </div>
+      <div style="position:relative;height:160px">
+        <canvas id="c-gestion" role="img" aria-label="Gráfica de efectividad diaria y eficiencia de concreción"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Reservas: solicitadas vs confirmadas</div>
+      <div class="chart-sub">Hoteles + apartamentos · acumulado</div>
+      <div class="leg-row">
+        <span class="leg-item"><span class="leg-sq" style="background:#2a78d6"></span>Solicitadas</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#1baf7a"></span>Confirmadas</span>
+      </div>
+      <div style="position:relative;height:160px">
+        <canvas id="c-reservas" role="img" aria-label="Gráfica de reservas solicitadas vs confirmadas"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="charts-row" style="margin-top:10px">
+    <div class="chart-card">
+      <div class="chart-title">Héroes y familiares: solicitados vs confirmados</div>
+      <div class="chart-sub">Acumulado diario</div>
+      <div class="leg-row">
+        <span class="leg-item"><span class="leg-sq" style="background:#2a78d6"></span>Solicitados</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#1baf7a"></span>Confirmados</span>
+      </div>
+      <div style="position:relative;height:160px">
+        <canvas id="c-heroes" role="img" aria-label="Gráfica de héroes solicitados vs confirmados"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Noches confirmadas por día</div>
+      <div class="chart-sub">Nuevas noches sumadas cada día</div>
+      <div class="leg-row">
+        <span class="leg-item"><span class="leg-sq" style="background:#eda100"></span>Noches del día</span>
+      </div>
+      <div style="position:relative;height:160px">
+        <canvas id="c-noches" role="img" aria-label="Gráfica de noches confirmadas por día"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORGANIZACIONES -->
+  <div class="sec-title">Organizaciones atendidas</div>
+  <div class="chart-card full">
+    <div class="org-wrap">
+      <table id="org-table">
+        <thead>
+          <tr>
+            <th>Organización</th><th>Tipo</th><th>Apoyo</th>
+            <th>Lugar</th><th>Llegada</th><th>Salida</th>
+            <th>Solicitud</th><th>Confirmación</th><th>Días resp.</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="org-body">
+          <tr><td colspan="10" style="text-align:center;color:var(--texto3);padding:1rem">Cargando organizaciones...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alerta" id="alerta-pendientes" style="display:none">
+      ⏱ Hay organizaciones con confirmación de reserva pendiente — en seguimiento activo
+    </div>
+  </div>
+
+  <!-- FONDOS + NOVEDADES -->
+  <div class="sec-title">Fondos y novedades</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Estado de fondos</div>
+      <div style="margin-top:8px">
+        <div class="fondos-row">
+          <span class="fl">Recaudado (USD)</span>
+          <span class="fv c-azul" id="f-usd">—</span>
+        </div>
+        <div class="fondos-row">
+          <span class="fl">Recaudado <span class="tag-bs">Bs</span></span>
+          <span class="fv c-naranja" id="f-bs">—</span>
+        </div>
+        <div class="fondos-row">
+          <span class="fl">Ejecutado / pagado</span>
+          <span class="fv" id="f-ejec" style="color:var(--texto3)">—</span>
+        </div>
+        <div class="fondos-row">
+          <span class="fl" style="font-weight:600;color:var(--texto)">Saldo disponible</span>
+          <span class="fv c-verde" style="font-size:16px" id="f-saldo">—</span>
+        </div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-label"><span>Ejecución de fondos</span><span id="f-pct">0%</span></div>
+        <div class="prog-track"><div class="prog-fill" id="f-bar" style="width:0%;background:#e34948"></div></div>
+      </div>
+      <div style="font-size:10px;color:var(--texto3);margin-top:6px">Bs convertidos a tasa Bs 617.63/USD</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Novedad del día</div>
+      <div style="margin-top:8px">
+        <div class="nota-box" id="novedad-box">Cargando...</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--texto3);font-style:italic">
+          Se actualiza automáticamente con el Google Sheet cada vez que abres este dashboard.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="footer">
+  Dashboard conectado a Google Sheets · Se actualiza automáticamente al abrir ·
+  <strong>Sala Situacional HPH</strong> · Contingencia Nacional Venezuela
+</div>
+</div><!-- /dashboard -->
+
+<script>
+const SHEET_ID = '1uaW-G0trgEXGWUmGYVuiOirgw0Dct_OHL4Cnoh0j7Lw';
+const CSV_DIARIO = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+const CSV_ORGS   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1214108340`;
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function num(v) {
+  if (!v || v === '' || v === '-') return 0;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function pct(v) {
+  const n = num(v);
+  return Math.round(n * 100) + '%';
+}
+
+function usd(v) {
+  const n = num(v);
+  return '$' + n.toLocaleString('es-VE', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function buildCharts(labels, datasets) {
+  const grid = 'rgba(128,128,128,0.1)';
+  const tick = '#898781';
+  const base = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: grid }, ticks: { color: tick, font: { size: 10 } } },
+      y: { grid: { color: grid }, ticks: { color: tick, font: { size: 10 } }, beginAtZero: true }
+    },
+    elements: { line: { tension: .35 }, point: { radius: labels.length === 1 ? 6 : 4, hoverRadius: 7 } }
+  };
+
+  // Efectividad
+  new Chart(document.getElementById('c-gestion'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { data: datasets.efectividad, borderColor: '#3B6D11', borderWidth: 2, fill: false, pointBackgroundColor: '#3B6D11' },
+      { data: datasets.concrecion, borderColor: '#2a78d6', borderWidth: 2, fill: false, borderDash: [4,3], pointBackgroundColor: '#2a78d6' }
+    ]},
+    options: { ...base, scales: { ...base.scales, y: { ...base.scales.y, max: 1,
+      ticks: { ...base.scales.y.ticks, callback: v => Math.round(v*100)+'%' }
+    }}}
+  });
+
+  // Reservas
+  new Chart(document.getElementById('c-reservas'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { data: datasets.resSol, borderColor: '#2a78d6', borderWidth: 2, fill: false, pointBackgroundColor: '#2a78d6' },
+      { data: datasets.resConf, borderColor: '#1baf7a', borderWidth: 2, fill: false, pointBackgroundColor: '#1baf7a' }
+    ]},
+    options: base
+  });
+
+  // Héroes
+  new Chart(document.getElementById('c-heroes'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { data: datasets.herSol, borderColor: '#2a78d6', borderWidth: 2, fill: false, pointBackgroundColor: '#2a78d6' },
+      { data: datasets.herConf, borderColor: '#1baf7a', borderWidth: 2, fill: false, pointBackgroundColor: '#1baf7a' }
+    ]},
+    options: base
+  });
+
+  // Noches
+  new Chart(document.getElementById('c-noches'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { data: datasets.noches, backgroundColor: '#eda100', borderRadius: 4, maxBarThickness: 36 }
+    ]},
+    options: base
+  });
+}
+
+function buildOrgTable(rows) {
+  const tbody = document.getElementById('org-body');
+  let pendientes = 0;
+
+  // Skip header rows (first 3)
+  const dataRows = rows.slice(3).filter(r => r[0] && r[0].trim() !== '' && r[0] !== 'Nombre completo');
+
+  if (dataRows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--texto3);padding:1rem">Sin organizaciones registradas aún</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dataRows.map(r => {
+    const estado = r[9] || '';
+    const confirmacion = r[12] || '';
+    const diasResp = r[13] || '';
+    if (!confirmacion || confirmacion === '' || confirmacion.toLowerCase() === 'pendiente') pendientes++;
+
+    const estadoHTML = estado === 'Activa'
+      ? `<span class="status-dot dot-verde"></span>${estado}`
+      : `<span class="status-dot dot-amber"></span>${estado || 'Por Pagar'}`;
+
+    const tipoClass = r[1] === 'Asoc. Civil' ? 'tag-blue' : 'tag-gray';
+    const apoyoClass = r[3] && r[3].includes('Financiamiento') ? 'tag-verde' : 'tag-gray';
+
+    const confHTML = confirmacion && confirmacion !== ''
+      ? `<span style="color:var(--verde-med)">${confirmacion}</span>`
+      : `<span style="color:var(--naranja);font-style:italic">Pendiente</span>`;
+
+    const diasHTML = diasResp && diasResp !== 'Pendiente' && diasResp !== ''
+      ? `<span style="color:var(--verde-med);font-weight:600">${diasResp}</span>`
+      : `<span style="color:var(--naranja)">—</span>`;
+
+    return `<tr>
+      <td><strong>${r[0] || ''}</strong></td>
+      <td><span class="pill-tag ${tipoClass}">${r[1] || ''}</span></td>
+      <td><span class="pill-tag ${apoyoClass}">${r[3] || ''}</span></td>
+      <td>${r[5] || ''}</td>
+      <td>${r[7] ? r[7].substring(0,5) : ''}</td>
+      <td>${r[8] ? r[8].substring(0,5) : ''}</td>
+      <td>${r[11] || ''}</td>
+      <td>${confHTML}</td>
+      <td>${diasHTML}</td>
+      <td>${estadoHTML}</td>
+    </tr>`;
+  }).join('');
+
+  if (pendientes > 0) {
+    const alerta = document.getElementById('alerta-pendientes');
+    alerta.style.display = 'flex';
+    alerta.textContent = `⏱ ${pendientes} organización${pendientes > 1 ? 'es' : ''} con confirmación de reserva pendiente — en seguimiento activo`;
+  }
+}
+
+async function loadData() {
+  try {
+    // Load both sheets in parallel
+    const [r1, r2] = await Promise.all([
+      fetch(CSV_DIARIO),
+      fetch(CSV_ORGS)
+    ]);
+
+    if (!r1.ok || !r2.ok) throw new Error('No se pudo acceder al Sheet');
+
+    const [t1, t2] = await Promise.all([r1.text(), r2.text()]);
+    const diario = parseCSV(t1);
+    const orgs   = parseCSV(t2);
+
+    // Build lookup: indicador → array of values by column
+    const lookup = {};
+    diario.forEach(row => {
+      if (row[0]) lookup[row[0].trim()] = row.slice(1);
+    });
+
+    // Date headers (row index 1)
+    const fechas = diario[1] ? diario[1].slice(1).filter(f => f && f !== '') : [];
+
+    // Find last non-empty column index
+    let lastIdx = 0;
+    fechas.forEach((f, i) => {
+      const sol = num(lookup['Reservas SOLICITADAS (hoteles)']?.[i]);
+      const conf = num(lookup['Reservas CONFIRMADAS HOY (hoteles)']?.[i]);
+      if (sol > 0 || conf > 0) lastIdx = i;
+    });
+    // Also check heroes
+    fechas.forEach((f, i) => {
+      const v = num(lookup['TOTAL personas solicitadas']?.[i]);
+      if (v > 0) lastIdx = Math.max(lastIdx, i);
+    });
+
+    const activeDates = fechas.slice(0, lastIdx + 1);
+
+    // --- KPIs (latest day) ---
+    const li = lastIdx;
+    const totalSol  = num(lookup['TOTAL personas solicitadas']?.[li]);
+    const totalConf = num(lookup['TOTAAL personas confirmadas']?.[li]);
+    const herSol    = num(lookup['Héroes SOLICITADOS (acum.)']?.[li]);
+    const herConf   = num(lookup['Héroes HOSPEDAJE confirmado']?.[li]);
+    const famSol    = num(lookup['Familiares SOLICITADOS (acum.)']?.[li]);
+    const famConf   = num(lookup['Familiares HOSPEDAJE confirmado']?.[li]);
+    const noches    = num(lookup['Noches CONFIRMADAS']?.[li]);
+    const orgsN     = num(lookup['Organizaciones atendidas']?.[li]);
+    const alianzas  = num(lookup['Alianzas con hoteles concretadas']?.[li]);
+    const recUSD    = num(lookup['Fondos recaudados en dolares']?.[li]);
+    const recBS     = num(lookup['Fondos recaudados en Bolivares']?.[li]);
+    const ejec      = num(lookup['Fondos ejecutados / pagados (acum.)']?.[li]);
+    const saldo     = (recUSD - ejec) + (recBS / 617.63);
+    const novedad   = lookup['Novedades / consideraciones']?.[li] || 'Sin novedades registradas para hoy.';
+
+    // Reservas
+    const resSolH  = num(lookup['Reservas SOLICITADAS (hoteles)']?.[li]);
+    const resConfH = num(lookup['Reservas CONFIRMADAS HOY (hoteles)']?.[li]);
+    const resAyerH = num(lookup['Reservas de AYER CONFIRMADAS HOY (hoteles)']?.[li]);
+    const resSolA  = num(lookup['Reservas SOLICITADAS (apartamentos)']?.[li]);
+    const resConfA = num(lookup['Reservas CONFIRMADAS HOY (apartamentos)']?.[li]);
+    const resAyerA = num(lookup['Reservas de AYER CONFIRMADAS HOY (apartamentos)']?.[li]);
+
+    // Indicadores de gestión
+    const totalResSol  = resSolH + resSolA;
+    const totalResConf = resConfH + resConfA;
+    const totalResAyer = resAyerH + resAyerA;
+    const efectividad  = totalResSol > 0 ? totalResConf / totalResSol : 0;
+    const concrecion   = totalResSol > 0 ? (totalResConf + totalResAyer) / totalResSol : 0;
+
+    // --- Update DOM ---
+    document.getElementById('kpi-sol').textContent = totalSol || '—';
+    document.getElementById('kpi-sol-sub').textContent = `${herSol} héroes · ${famSol} familiares`;
+    document.getElementById('kpi-conf').textContent = totalConf || '—';
+    document.getElementById('kpi-conf-sub').textContent = `${herConf} héroes · ${famConf} familiares`;
+    document.getElementById('kpi-noches').textContent = noches || '—';
+    document.getElementById('kpi-orgs').textContent = orgsN || '—';
+    document.getElementById('kpi-alianzas').textContent = alianzas || '—';
+    document.getElementById('kpi-saldo').textContent = usd(saldo);
+
+    document.getElementById('gc-efectividad').textContent = Math.round(efectividad * 100) + '%';
+    document.getElementById('gc-efectividad-desc').textContent =
+      `${totalResConf} de ${totalResSol} reservas cerradas el mismo día`;
+    document.getElementById('gc-concrecion').textContent = Math.round(concrecion * 100) + '%';
+    document.getElementById('gc-concrecion-desc').textContent =
+      `${totalResConf + totalResAyer} de ${totalResSol} reservas cerradas en 48h`;
+
+    document.getElementById('f-usd').textContent = usd(recUSD);
+    document.getElementById('f-bs').textContent = 'Bs ' + recBS.toLocaleString('es-VE');
+    document.getElementById('f-ejec').textContent = usd(ejec);
+    document.getElementById('f-saldo').textContent = usd(saldo);
+    const pctEjec = recUSD > 0 ? Math.min(100, Math.round(ejec / recUSD * 100)) : 0;
+    document.getElementById('f-pct').textContent = pctEjec + '%';
+    document.getElementById('f-bar').style.width = pctEjec + '%';
+    document.getElementById('novedad-box').textContent = novedad.replace(/\\n/g, '\n');
+
+    // Fecha actualización
+    const ahora = new Date();
+    document.getElementById('ultima-act').textContent =
+      'Actualizado: ' + ahora.toLocaleDateString('es-VE') + ' ' + ahora.toLocaleTimeString('es-VE', {hour:'2-digit',minute:'2-digit'});
+
+    // --- Build chart datasets ---
+    const datasets = {
+      efectividad: [], concrecion: [],
+      resSol: [], resConf: [],
+      herSol: [], herConf: [],
+      noches: []
+    };
+
+    activeDates.forEach((_, i) => {
+      const rsh = num(lookup['Reservas SOLICITADAS (hoteles)']?.[i]);
+      const rch = num(lookup['Reservas CONFIRMADAS HOY (hoteles)']?.[i]);
+      const rah = num(lookup['Reservas de AYER CONFIRMADAS HOY (hoteles)']?.[i]);
+      const rsa = num(lookup['Reservas SOLICITADAS (apartamentos)']?.[i]);
+      const rca = num(lookup['Reservas CONFIRMADAS HOY (apartamentos)']?.[i]);
+      const raa = num(lookup['Reservas de AYER CONFIRMADAS HOY (apartamentos)']?.[i]);
+      const ts  = rsh + rsa;
+      const tc  = rch + rca;
+      const ta  = rah + raa;
+
+      datasets.efectividad.push(ts > 0 ? Math.round(tc/ts*100)/100 : null);
+      datasets.concrecion.push(ts > 0 ? Math.round((tc+ta)/ts*100)/100 : null);
+      datasets.resSol.push(ts);
+      datasets.resConf.push(tc);
+      datasets.herSol.push(num(lookup['TOTAL personas solicitadas']?.[i]));
+      datasets.herConf.push(num(lookup['TOTAAL personas confirmadas']?.[i]));
+      datasets.noches.push(num(lookup['Noches CONFIRMADAS']?.[i]));
+    });
+
+    buildCharts(activeDates, datasets);
+    buildOrgTable(orgs);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent =
+      '⚠️ No se pudieron cargar los datos: ' + err.message +
+      '. Verifica que el Sheet esté publicado en la web (Archivo → Compartir → Publicar en la web).';
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
