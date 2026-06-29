@@ -412,16 +412,16 @@ async function loadData(){
     const [r1,r2,r3,r4,r5]=await Promise.all([
       fetch(API+'?file=solicitudes&sheet=Solicitud de Reservas'),
       fetch(API+'?file=solicitudes&sheet=Reservas Concretadas'),
-      fetch(API+'?file=solicitudes&sheet=Alianzas ConcretadasDisponibili'),
+      fetch(API+'?file=solicitudes&sheet=Alianzas ConcretadasDisponibili').catch(()=>({json:()=>[]})),
       fetch(API+'?file=principal&sheet=SEGUIMIENTO DIARIO'),
       fetch(API+'?file=principal&sheet=ORGANIZACIONES')
     ]);
     const [sol,conc,alianzas,diario,orgsSheet]=await Promise.all([r1.json(),r2.json(),r3.json(),r4.json(),r5.json()]);
 
     // Parse solicitudes (skip header row 0)
-    const solRows=sol.slice(1).filter(r=>r[0]);
-    const concRows=conc.slice(1).filter(r=>r[0]);
-    const aliRows=alianzas.slice(1).filter(r=>r[0]);
+    const solRows=Array.isArray(sol)?sol.slice(1).filter(r=>r[0]):[];
+    const concRows=Array.isArray(conc)?conc.slice(1).filter(r=>r[0]):[];
+    const aliRows=Array.isArray(alianzas)?alianzas.slice(1).filter(r=>r[0]):[];
 
     // Lookup diario
     const lookup={};
