@@ -412,7 +412,7 @@ async function loadData(){
     const [r1,r2,r3,r4,r5]=await Promise.all([
       fetch(API+'?file=solicitudes&sheet=Solicitud de Reservas'),
       fetch(API+'?file=solicitudes&sheet=Reservas Concretadas'),
-      fetch(API+'?file=solicitudes&sheet=Alianzas ConcretadasDisponibili').catch(()=>({json:()=>[]})),
+      fetch(API+'?file=solicitudes&sheet=Alianzas Concretadas/Disponibilidad confirmada').catch(()=>({json:()=>[]})),
       fetch(API+'?file=principal&sheet=SEGUIMIENTO DIARIO'),
       fetch(API+'?file=principal&sheet=ORGANIZACIONES')
     ]);
